@@ -338,3 +338,113 @@ func (fr *ImageFrame) AppendValues(imgs ...*Image) (err error) {
 	return
 
 }
+
+type UFIDFrame struct {
+	frame
+}
+
+func (fr *UFIDFrame) ID() (string, error) {
+	vals, err := fr.IDs()
+	if err != nil {
+		return ``, err
+	}
+
+	if len(vals) > 1 {
+		return ``, errors.New(`multiple key-val pairs. use IDbyOwner`)
+	}
+
+	for _, v := range vals {
+		return v, nil
+	}
+
+	return ``, nil
+}
+
+func (fr *UFIDFrame) Owners() (vals []string, err error) {
+	ids, err := fr.IDs()
+	if err != nil {
+		return
+	}
+
+	for k, _ := range ids {
+		vals = append(vals, k)
+	}
+
+	return
+}
+
+func (fr *UFIDFrame) IDs() (vals map[string]string, err error) {
+
+	vals = make(map[string]string)
+	for i := 0; i < python.PyList_GET_SIZE(fr.pyFr); i++ {
+		item := python.PyList_GetItem(fr.pyFr, 0)
+		if item == nil {
+			return nil, errors.New(`Unable to read title`)
+		}
+
+		pyKey := item.GetAttrString(`owner`)
+		if pyKey == nil {
+			return nil, errors.New(`Unable to read owner`)
+		}
+
+		pyData := item.GetAttrString(`data`)
+		if pyData == nil {
+			return nil, errors.New(`Unable to read title`)
+		}
+
+		vals[python.PyString_AsString(pyKey)] = python.PyString_AsString(pyData)
+	}
+
+	for k, v := range vals {
+		fmt.Println(`pair`, k, v)
+	}
+
+	return
+}
+
+func (fr *UFIDFrame) SetID(owner, id string) (err error) {
+	vals := make(map[string]string)
+	vals[owner] = id
+
+	return fr.SetValues(vals)
+}
+
+func (fr *UFIDFrame) SetValues(vals map[string]string) (err error) {
+
+	fr.pyFr = python.PyList_New(0)
+	if fr.pyFr == nil {
+		return errors.New(`list creation failed`)
+	}
+
+	return fr.AppendValues(vals)
+
+}
+
+func (fr *UFIDFrame) AppendValues(vals map[string]string) (err error) {
+
+	position := python.PyList_GET_SIZE(fr.pyFr)
+
+	for k, v := range vals {
+
+		frClass := _mutagen.GetAttrString(string(fr.tagID))
+		if frClass == nil {
+			return errors.New(`Unable to get class`)
+		}
+
+		tagIns := frClass.CallFunction() //python.PyLong_FromLong(1), n_title)
+		if tagIns == nil {
+			return errors.New(`instanciation failed`)
+		}
+
+		tagIns.SetAttrString(`owner`, python.PyString_FromString(k))
+		tagIns.SetAttrString(`data`, python.PyString_FromString(v))
+
+		python.PyList_Insert(fr.pyFr, position, tagIns)
+
+		position++
+
+	}
+
+	return
+
+}

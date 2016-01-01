@@ -144,3 +144,49 @@ func (id3 *ID3) CoverImage() (*Image, error) {
 
 	return fr.(*ImageFrame).ImageByType(3)
 }
+
+func (id3 *ID3) SetID(owner, id string) (err error) {
+	fr, err := id3.Frame(V23_UFID)
+	if err != nil {
+		return err
+	}
+
+	err = fr.(*UFIDFrame).SetID(owner, id)
+	if err != nil {
+		return err
+	}
+
+	return id3.SetFrame(fr)
+}
+
+func (id3 *ID3) ID() (string, error) {
+	fr, err := id3.Frame(V23_UFID)
+	if err != nil {
+		return ``, err
+	}
+
+	return fr.(*UFIDFrame).ID()
+}
+
+func (id3 *ID3) SetLanguage(val string) (err error) {
+	fr, err := id3.Frame(V23_TLAN)
+	if err != nil {
+		return err
+	}
+
+	err = fr.(*TextFrame).SetValues(val)
+	if err != nil {
+		return err
+	}
+
+	return id3.SetFrame(fr)
+}
+
+func (id3 *ID3) Language() (string, error) {
+	fr, err := id3.Frame(V23_TLAN)
+	if err != nil {
+		return ``, err
+	}
+
+	return fr.(*TextFrame).Val()
+}
