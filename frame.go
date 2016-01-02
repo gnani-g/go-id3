@@ -395,10 +395,6 @@ func (fr *UFIDFrame) IDs() (vals map[string]string, err error) {
 		vals[python.PyString_AsString(pyKey)] = python.PyString_AsString(pyData)
 	}
 
-	for k, v := range vals {
-		fmt.Println(`pair`, k, v)
-	}
-
 	return
 }
 
