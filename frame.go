@@ -5,6 +5,11 @@ import (
 	"fmt"
 
 	"github.com/sbinet/go-python"
+	"golang.org/x/text/encoding/unicode"
+)
+
+var (
+	utf16 = unicode.UTF16(unicode.LittleEndian, unicode.IgnoreBOM)
 )
 
 type Framer interface {
@@ -70,7 +75,12 @@ func (fr *TextFrame) Vals() (vals []string, err error) {
 				return nil, errors.New(`Unable to read title`)
 			}
 
-			val += ` ` + python.PyString_AsString(pyVal)
+			v, err := utf16.NewDecoder().String(python.PyString_AsString(pyVal))
+			if err != nil {
+				return nil, err
+			}
+
+			val += ` ` + v
 		}
 
 		if len(val) > 0 {
@@ -99,6 +109,11 @@ func (fr *TextFrame) AppendValues(vals ...string) (err error) {
 	position := python.PyList_GET_SIZE(fr.pyFr)
 
 	for _, v := range vals {
+
+		v, err = utf16.NewEncoder().String(v)
+		if err != nil {
+			return
+		}
 
 		pyVal := python.PyList_New(0)
 		if pyVal == nil {
@@ -167,7 +182,12 @@ func (fr *COMMFrame) Vals() (vals []string, err error) {
 				return nil, errors.New(`Unable to read title`)
 			}
 
-			val += ` ` + python.PyString_AsString(pyVal)
+			v, err := utf16.NewDecoder().String(python.PyString_AsString(pyVal))
+			if err != nil {
+				return nil, err
+			}
+
+			val += ` ` + v
 		}
 
 		if len(val) > 0 {
@@ -196,6 +216,11 @@ func (fr *COMMFrame) AppendValues(vals ...string) (err error) {
 	position := python.PyList_GET_SIZE(fr.pyFr)
 
 	for _, v := range vals {
+
+		v, err = utf16.NewEncoder().String(v)
+		if err != nil {
+			return
+		}
 
 		pyVal := python.PyList_New(0)
 		if pyVal == nil {

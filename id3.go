@@ -108,3 +108,14 @@ func (id3 *ID3) SetFrame(fr Framer) (err error) {
 	return
 
 }
+
+func (id3 *ID3) DeleteFrames() (err error) {
+
+	out := id3.pyID3.CallMethod(`deleteall`)
+	if out == nil {
+		return errors.New(`delete frames failed`)
+	}
+
+	return
+
+}
